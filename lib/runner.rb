@@ -39,13 +39,19 @@ module GitPivot
         stop_on SUB_COMMANDS
       end
       
-      cmd = @argv.shift # get the subcommand
+      cmd = @argv.shift
       cmd_opts = case cmd
-                 when "current" # parse delete options
+                 when "current"
                    Trollop::options do
-                     banner "List the stories that are part of the current iteration."
+                     banner "Lists the stories that are part of the current iteration."
                    end
                    @git_pivot.current_sprint
+                 when "work"
+                   # FIXME: This help message doesn't appear with a 'git_pivot work -h', but the 'git_pivot current -h' message does.
+                   Trollop::options do
+                     banner "Lists the stories that you own."
+                   end
+                   @git_pivot.my_work
                  else
                    Trollop::die "unknown subcommand #{cmd.inspect}"
                  end
