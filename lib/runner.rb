@@ -42,6 +42,9 @@ module GitPivot
       cmd = @argv.shift # get the subcommand
       cmd_opts = case cmd
                  when "current" # parse delete options
+                   Trollop::options do
+                     banner "List the stories that are part of the current iteration."
+                   end
                    @git_pivot.current_sprint
                  else
                    Trollop::die "unknown subcommand #{cmd.inspect}"
