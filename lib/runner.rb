@@ -17,14 +17,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 =end
 
-require 'optparse'
+require 'trollop'
 require 'date'
 
 module GitPivot
   class Runner
+    SUB_COMMANDS = %w{current}
+    
     def initialize(args)
       @argv = args
-      process_args
+
       # configuration stuff
       configuration = YAML.load_file("git_pivot.yml")
 
@@ -32,17 +34,18 @@ module GitPivot
     end
 
     def run
-      if @arg1
-        @git_pivot.send(@command, @arg1)
-      else
-        @git_pivot.send(@command)
+      global_opts = Trollop::options do
+        banner "A command-line interface to Pivotal Tracker."
+        stop_on SUB_COMMANDS
       end
-    end
-
-    private
-    def process_args
-      @command = @argv.shift
-      @arg1 = @argv.shift
+      
+      cmd = @argv.shift # get the subcommand
+      cmd_opts = case cmd
+                 when "current" # parse delete options
+                   @git_pivot.current_sprint
+                 else
+                   Trollop::die "unknown subcommand #{cmd.inspect}"
+                 end
     end
   end
 end
