@@ -35,7 +35,14 @@ module GitPivot
 
     def run
       global_opts = Trollop::options do
-        banner "A command-line interface to Pivotal Tracker."
+        banner <<-BANNER
+A command-line interface for Pivotal Tracker.
+
+Subcommands:
+  current - Lists the stories that are part of the current iteration.
+  work    - Lists the stories that you own.
+  
+        BANNER
         stop_on SUB_COMMANDS
       end
       
