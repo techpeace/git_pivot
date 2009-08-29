@@ -19,9 +19,22 @@
 
 require 'ruport'
 require 'pivotal-tracker'
+require 'mutter'
 
 module GitPivot
   class GitPivot
+    
+    module Styles
+      STYLES = {
+        :header  => {                     # an alias you can use anywhere in mutter
+          :match => '*',
+          :style => ['yellow', 'bold']    # these styles will be applied to the match
+        }
+      }
+    end
+    include Styles
+    
+    FORMATTER = Mutter.new(STYLES)
 
     # ssl should default to yes since http basic auth is insecure
     def initialize(project_id, token, owner, use_ssl = true)
@@ -87,9 +100,55 @@ module GitPivot
       data = stories.collect do |story| 
         [story.id, story.story_type, story.owned_by, story.current_state, story.name]
       end
-
-      puts Table(:data => data, :column_names => ["ID", "Type", "Owner", "State", "Name"])
+      
+      table = Table(:data => data, :column_names => %w{ID Type Owner State Name}).to_s
+      puts format_table(table)
     end
 
+    def format_table(table)
+      formatted_table = ""
+      
+      formatted_splitter = FORMATTER['|', :red, :inverse]
+      
+      table.each_with_index do |line, index|
+        # HEADER ROW
+        if index == 1
+          columns = line.split('|')
+          formatted_table << columns.collect{ |col| FORMATTER[col, :cyan, :inverse] }.join(FORMATTER['|', :cyan, :inverse])
+        elsif index == 0 || index == 2
+          formatted_table << FORMATTER[line, :cyan, :inverse]
+        elsif index > 2
+          columns = line.split('|')
+          
+          state_col = columns[4] || ""
+          state_color = case state_col.strip
+                        when 'accepted'
+                          :green
+                        when 'rejected'
+                          :red
+                        when 'started'
+                          :cyan
+                        when 'delivered'
+                          :yellow
+                        else
+                          :white
+                        end
+          
+          index = -1
+          formatted_cells = columns.collect do |col| 
+            index += 1
+            # STATE COLUMN
+            if index == 4
+              FORMATTER[col, state_color, :inverse]
+            else
+              FORMATTER[col, :white, :inverse]
+            end
+          end
+          formatted_table << formatted_cells.join(formatted_splitter)
+        end
+      end
+      
+      formatted_table
+    end
   end
 end
